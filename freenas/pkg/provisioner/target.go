@@ -18,10 +18,11 @@ type Target struct {
 }
 
 func (u *TargetUtil) List() ([]Target, error) {
-    var url = fmt.Sprintf("%s/api/v1.0/services/iscsi/target/?format=json", u.Config.Url)
-    req, err := http.NewRequest(http.MethodGet, url, nil)
+    var uri = fmt.Sprintf("%s/api/v1.0/services/iscsi/target/?format=json", u.Config.Uri)
+    req, err := http.NewRequest(http.MethodGet, uri, nil)
     if err != nil {
         log.Fatal(err)
+        return nil, err
     }
     req.SetBasicAuth(u.Config.Username, u.Config.Password)
     resp, err := httpClient.Do(req)
@@ -48,7 +49,7 @@ func (u *TargetUtil) Find(name string) (*Target, error) {
 }
 
 func (u *TargetUtil) Create(name string) (*Target, error) {
-    var url = fmt.Sprintf("%s/api/v1.0/services/iscsi/target/", u.Config.Url)
+    var uri = fmt.Sprintf("%s/api/v1.0/services/iscsi/target/", u.Config.Uri)
     t := &Target{
         Name: name,
         Alias: name,
@@ -56,7 +57,7 @@ func (u *TargetUtil) Create(name string) (*Target, error) {
     b := new(bytes.Buffer)
     json.NewEncoder(b).Encode(t)
     log.Printf("Posting: %s", b.String())
-    req, err := http.NewRequest(http.MethodPost, url, b)
+    req, err := http.NewRequest(http.MethodPost, uri, b)
     if err != nil {
         log.Fatal(err)
         return nil, err
@@ -69,15 +70,14 @@ func (u *TargetUtil) Create(name string) (*Target, error) {
         return nil, err
     }
     if resp.StatusCode != 201 {
-        log.Fatal(resp.Status)
         return nil, fmt.Errorf("Request failed with status: %s", resp.Status)
     }
     json.NewDecoder(resp.Body).Decode(t)
     return t, nil
 }
 func (u *TargetUtil) Delete(targetId uint) (error) {
-    var url = fmt.Sprintf("%s/api/v1.0/services/iscsi/target/%d/", u.Config.Url, targetId)
-    req, err := http.NewRequest(http.MethodDelete, url, nil)
+    var uri = fmt.Sprintf("%s/api/v1.0/services/iscsi/target/%d/", u.Config.Uri, targetId)
+    req, err := http.NewRequest(http.MethodDelete, uri, nil)
     if err != nil {
         log.Fatal(err)
         return err
@@ -90,7 +90,6 @@ func (u *TargetUtil) Delete(targetId uint) (error) {
         return  err
     }
     if resp.StatusCode != 200 && resp.StatusCode != 204 {
-        log.Fatal(resp.Status)
         return fmt.Errorf("Request failed with status: %s", resp.Status)
     }
     return nil
@@ -111,10 +110,11 @@ type TargetGroup struct {
 }
 
 func (u *TargetGroupUtil) List() ([]TargetGroup, error) {
-    var url = fmt.Sprintf("%s/api/v1.0/services/iscsi/targetgroup/?format=json", u.Config.Url)
-    req, err := http.NewRequest(http.MethodGet, url, nil)
+    var uri = fmt.Sprintf("%s/api/v1.0/services/iscsi/targetgroup/?format=json", u.Config.Uri)
+    req, err := http.NewRequest(http.MethodGet, uri, nil)
     if err != nil {
         log.Fatal(err)
+        return nil, err
     }
     req.SetBasicAuth(u.Config.Username, u.Config.Password)
     resp, err := httpClient.Do(req)
@@ -140,7 +140,7 @@ func (u *TargetGroupUtil) Find(targetId uint) (*TargetGroup, error) {
     return nil, fmt.Errorf("Unable to find TargetGroup: Target = %d\n", targetId)
 }
 func (u *TargetGroupUtil) Create(targetId uint) (*TargetGroup, error) {
-    var url = fmt.Sprintf("%s/api/v1.0/services/iscsi/targetgroup/", u.Config.Url)
+    var uri = fmt.Sprintf("%s/api/v1.0/services/iscsi/targetgroup/", u.Config.Uri)
     g := &TargetGroup{
         TargetId: targetId,
         AuthGroup: nil,
@@ -152,7 +152,7 @@ func (u *TargetGroupUtil) Create(targetId uint) (*TargetGroup, error) {
     b := new(bytes.Buffer)
     json.NewEncoder(b).Encode(g)
     log.Printf("Posting: %s", b.String())
-    req, err := http.NewRequest(http.MethodPost, url, b)
+    req, err := http.NewRequest(http.MethodPost, uri, b)
     if err != nil {
         log.Fatal(err)
         return nil, err
@@ -179,10 +179,8 @@ func (u *TargetGroupUtil) Delete(target uint) (error) {
     }
     for _, tg := range tgs {
         if tg.TargetId == target {
-            // do delete
-            var url = fmt.Sprintf("%s/api/v1.0/services/iscsi/targetgroup/%d/", u.Config.Url, tg.Id)
-            log.Printf("DELETE: %s", url)
-            req, err := http.NewRequest(http.MethodDelete, url, nil)
+            var uri = fmt.Sprintf("%s/api/v1.0/services/iscsi/targetgroup/%d/", u.Config.Uri, tg.Id)
+            req, err := http.NewRequest(http.MethodDelete, uri, nil)
             if err != nil {
                 log.Fatal(err)
                 return err
@@ -195,7 +193,6 @@ func (u *TargetGroupUtil) Delete(target uint) (error) {
                 return err
             }
             if resp.StatusCode != 204 {
-                log.Fatal(resp.Status)
                 return fmt.Errorf("Request failed with status: %s", resp.Status)
             }
             return nil
@@ -220,8 +217,8 @@ type TargetExtentResponse struct {
 }
 
 func (u *TargetExtentUtil) List() ([]TargetExtentResponse, error) {
-    var url = fmt.Sprintf("%s/api/v1.0/services/iscsi/targettoextent/?format=json", u.Config.Url)
-    req, err := http.NewRequest(http.MethodGet, url, nil)
+    var uri = fmt.Sprintf("%s/api/v1.0/services/iscsi/targettoextent/?format=json", u.Config.Uri)
+    req, err := http.NewRequest(http.MethodGet, uri, nil)
     if err != nil {
         log.Fatal(err)
         return nil, err
@@ -238,7 +235,7 @@ func (u *TargetExtentUtil) List() ([]TargetExtentResponse, error) {
 }
 
 func (u *TargetExtentUtil) Create(targetId uint, extentId uint, lunId uint) (*TargetExtentResponse, error) {
-    var url = fmt.Sprintf("%s/api/v1.0/services/iscsi/targettoextent/", u.Config.Url)
+    var uri = fmt.Sprintf("%s/api/v1.0/services/iscsi/targettoextent/", u.Config.Uri)
     tereq := &TargetExtentRequest{
         Target: targetId,
         Extent: extentId,
@@ -247,7 +244,7 @@ func (u *TargetExtentUtil) Create(targetId uint, extentId uint, lunId uint) (*Ta
     b := new(bytes.Buffer)
     json.NewEncoder(b).Encode(tereq)
     log.Printf("Posting: %s", b.String())
-    req, err := http.NewRequest(http.MethodPost, url, b)
+    req, err := http.NewRequest(http.MethodPost, uri, b)
     if err != nil {
         log.Fatal(err)
         return nil, err
@@ -277,9 +274,8 @@ func (u *TargetExtentUtil) Delete(target uint, extent uint) (error) {
     for _, te := range tes {
         if te.Extent == extent && te.Target == target {
             // do delete
-            var url = fmt.Sprintf("%s/api/v1.0/services/iscsi/targettoextent/%d/", u.Config.Url, te.Id)
-            log.Printf("DELETE: %s", url)
-            req, err := http.NewRequest(http.MethodDelete, url, nil)
+            var uri = fmt.Sprintf("%s/api/v1.0/services/iscsi/targettoextent/%d/", u.Config.Uri, te.Id)
+            req, err := http.NewRequest(http.MethodDelete, uri, nil)
             if err != nil {
                 log.Fatal(err)
                 return err
@@ -292,7 +288,6 @@ func (u *TargetExtentUtil) Delete(target uint, extent uint) (error) {
                 return err
             }
             if resp.StatusCode != 204 {
-                log.Fatal(resp.Status)
                 return fmt.Errorf("Request failed with status: %s", resp.Status)
             }
             return nil

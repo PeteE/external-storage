@@ -197,8 +197,8 @@ func (u *ZPoolUtil) Find(name string) (*ZPool, error) {
 }
 
 func (u *ZPoolUtil) List() ([]ZPool, error) {
-    var url = fmt.Sprintf("%s/api/v1.0/storage/volume/?format=json", u.Config.Url)
-    req, err := http.NewRequest(http.MethodGet, url, nil)
+    var uri = fmt.Sprintf("%s/api/v1.0/storage/volume/?format=json", u.Config.Uri)
+    req, err := http.NewRequest(http.MethodGet, uri, nil)
     if err != nil {
         log.Fatal(err)
     }
@@ -237,8 +237,8 @@ type ZVol struct {
 }
 
 func (u *ZVolUtil) List() ([]ZVol, error) {
-    var url = fmt.Sprintf("%s/api/v1.0/storage/volume/%s/zvols/?format=json", u.Config.Url, u.Config.Pool)
-    req, err := http.NewRequest(http.MethodGet, url, nil)
+    var uri = fmt.Sprintf("%s/api/v1.0/storage/volume/%s/zvols/?format=json", u.Config.Uri, u.Config.Pool)
+    req, err := http.NewRequest(http.MethodGet, uri, nil)
     if err != nil {
         log.Fatal(err)
     }
@@ -253,7 +253,7 @@ func (u *ZVolUtil) List() ([]ZVol, error) {
     return vols, nil
 }
 func (u *ZVolUtil) Create(name string, size int64, sparse bool, blocksize string) (*ZVol, error) {
-    var url = fmt.Sprintf("%s/api/v1.0/storage/volume/%s/zvols/", u.Config.Url, u.Config.Pool)
+    var uri = fmt.Sprintf("%s/api/v1.0/storage/volume/%s/zvols/", u.Config.Uri, u.Config.Pool)
     vol := &ZVol{
         Name: name,
         Volsize: size,
@@ -263,7 +263,7 @@ func (u *ZVolUtil) Create(name string, size int64, sparse bool, blocksize string
     b := new(bytes.Buffer)
     json.NewEncoder(b).Encode(vol)
     log.Printf("Posting: %s", b.String())
-    req, err := http.NewRequest(http.MethodPost, url, b)
+    req, err := http.NewRequest(http.MethodPost, uri, b)
     if err != nil {
         log.Fatal(err)
         return nil, err
@@ -283,8 +283,8 @@ func (u *ZVolUtil) Create(name string, size int64, sparse bool, blocksize string
     return vol, nil
 }
 func (u *ZVolUtil) Delete(name string) (error) {
-    var url = fmt.Sprintf("%s/api/v1.0/storage/volume/%s/zvols/%s/", u.Config.Url, u.Config.Pool, name)
-    req, err := http.NewRequest(http.MethodDelete, url, nil)
+    var uri = fmt.Sprintf("%s/api/v1.0/storage/volume/%s/zvols/%s/", u.Config.Uri, u.Config.Pool, name)
+    req, err := http.NewRequest(http.MethodDelete, uri, nil)
     if err != nil {
         log.Fatal(err)
         return err

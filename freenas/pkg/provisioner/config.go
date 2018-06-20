@@ -8,7 +8,7 @@ import (
 )
 
 type FreeNasConfig struct {
-    Url string
+    Uri string
     Pool string
     Username string
     Password string

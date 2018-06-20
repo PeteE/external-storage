@@ -3,3 +3,27 @@ apiVersion: storage.k8s.io/v1
 metadata:
   name: freenas
 provisioner: freenas-provisioner
+
+parameters:
+  # freenas username
+  username: root
+
+  # freenas password
+  password: changeme12
+
+  # uri of freenas host
+  uri: https://192.168.1.10
+
+  pool: wheatpool
+
+  # this ip where the iscsi server is running
+  targetPortal: 192.168.1.10:3260
+
+  # this is the freenas iscsi server iqn
+  iqn: iqn.2005-10.org.freenas.ctl
+
+  # This is the filesystem you want your volume to be formatted with, default xfs
+  fsType: ext4
+
+  # Whether the volume should be mounted in readonly mode, default false
+  # readonly: false

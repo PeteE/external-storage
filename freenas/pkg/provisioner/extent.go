@@ -20,11 +20,10 @@ type Extent struct {
 }
 
 func (u *ExtentUtil) List() ([]Extent, error) {
-    var url = fmt.Sprintf("%s/api/v1.0/services/iscsi/extent/?format=json", u.Config.Url)
-    req, err := http.NewRequest(http.MethodGet, url, nil)
+    var uri = fmt.Sprintf("%s/api/v1.0/services/iscsi/extent/?format=json", u.Config.Uri)
+    req, err := http.NewRequest(http.MethodGet, uri, nil)
     if err != nil {
         return nil, err
-        //log.Fatal(err)
     }
     req.SetBasicAuth(u.Config.Username, u.Config.Password)
     resp, err := httpClient.Do(req)
@@ -51,7 +50,7 @@ func (u *ExtentUtil) Find(name string) (*Extent, error) {
 }
 
 func (u *ExtentUtil) Create(name string) (*Extent, error) {
-    var url = fmt.Sprintf("%s/api/v1.0/services/iscsi/extent/", u.Config.Url)
+    var uri = fmt.Sprintf("%s/api/v1.0/services/iscsi/extent/", u.Config.Uri)
     extent := &Extent{
         EType: "Disk",
         Name: name,
@@ -59,21 +58,17 @@ func (u *ExtentUtil) Create(name string) (*Extent, error) {
     }
     b := new(bytes.Buffer)
     json.NewEncoder(b).Encode(extent)
-    //log.Printf("Posting: %s", b.String())
-    req, err := http.NewRequest(http.MethodPost, url, b)
+    req, err := http.NewRequest(http.MethodPost, uri, b)
     if err != nil {
-        //log.Fatal(err)
         return nil, err
     }
     req.SetBasicAuth(u.Config.Username, u.Config.Password)
     req.Header.Set("Content-Type", "application/json")
     resp, err := httpClient.Do(req)
     if err != nil {
-        //log.Fatal(err)
         return nil, err
     }
     if resp.StatusCode != 201 {
-        //log.Fatal(resp.Status)
         return nil, fmt.Errorf("Request failed with status: %s", resp.Status)
     }
     json.NewDecoder(resp.Body).Decode(extent)
@@ -86,14 +81,12 @@ func (u *ExtentUtil) Delete(name string) (error) {
     }
     extents, err := u.List()
     if err != nil {
-        //log.Fatal(err)
         return err
     }
     for _, e := range extents {
         if e.Name == name {
-            //log.Printf("Found match: %s, %d", e.Name, e.Id)
-            var url = fmt.Sprintf("%s/api/v1.0/services/iscsi/extent/%d/", u.Config.Url, e.Id)
-            req, err := http.NewRequest(http.MethodDelete, url, nil)
+            var uri = fmt.Sprintf("%s/api/v1.0/services/iscsi/extent/%d/", u.Config.Uri, e.Id)
+            req, err := http.NewRequest(http.MethodDelete, uri, nil)
             if err != nil {
                 log.Fatal(err)
                 return err
@@ -102,11 +95,10 @@ func (u *ExtentUtil) Delete(name string) (error) {
             req.Header.Set("Content-Type", "application/json")
             resp, err := httpClient.Do(req)
             if err != nil {
-                //log.Fatal(err)
+                log.Fatal(err)
                 return err
             }
             if resp.StatusCode != 200 && resp.StatusCode != 204 {
-                //log.Fatal(resp.Status)
                 return fmt.Errorf("Request failed with status: %s", resp.Status)
             }
             return nil

@@ -2,8 +2,10 @@ package provisioner
 
 import (
 	"fmt"
+	"strconv"
 	"github.com/kubernetes-incubator/external-storage/lib/controller"
 	"github.com/kubernetes-incubator/external-storage/lib/util"
+	"github.com/spf13/viper"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -48,7 +50,7 @@ func (p *freenasProvisioner) Provision(options controller.VolumeOptions) (*v1.Pe
 
 	annotations := make(map[string]string)
 	annotations["volume_name"] = vol.Name
-	annotations["pool"] = p.Config.Pool
+	annotations["pool"] = getPool(options.Parameters["pool"])
 
 	pv := &v1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
@@ -67,16 +69,11 @@ func (p *freenasProvisioner) Provision(options controller.VolumeOptions) (*v1.Pe
 			PersistentVolumeSource: v1.PersistentVolumeSource{
 				ISCSI: &v1.ISCSIPersistentVolumeSource{
 					TargetPortal:      p.Config.Portal,
-                    IQN:               fmt.Sprintf("%s:%s", p.Config.IQN, vol.Name),
+                    IQN:               getIQN(options.Parameters["iqn"], vol.Name),
 					ISCSIInterface:    "default",
 					Lun:               0,
-					ReadOnly:          false,
-					FSType:            "ext4",
-                    /*
-					DiscoveryCHAPAuth: false,
-					SessionCHAPAuth:   false
-					SecretRef:         nil,
-                    */
+					ReadOnly:          getReadOnly(options.Parameters["readonly"]),
+					FSType:            getFsType(options.Parameters["fsType"]),
 				},
 			},
 		},
@@ -98,6 +95,33 @@ func (p *freenasProvisioner) Delete(volume *v1.PersistentVolume) error {
 	return nil
 }
 
+func getReadOnly(readonly string) bool {
+	isReadOnly, err := strconv.ParseBool(readonly)
+	if err != nil {
+		return false
+	}
+	return isReadOnly
+}
+
+func getPool(pool string) string {
+    if pool == "" {
+        return viper.GetString("pool")
+    }
+	return pool
+}
+func getIQN(iqn string, vol string) string {
+    if iqn == "" {
+        iqn = viper.GetString("iqn")
+    }
+    return fmt.Sprintf("%s:%s", iqn, vol)
+}
+
+func getFsType(fsType string) string {
+	if fsType == "" {
+		return viper.GetString("default-fs")
+	}
+	return fsType
+}
 func getSize(options controller.VolumeOptions) int64 {
 	q := options.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)]
 	return q.Value()
