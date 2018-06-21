@@ -1,0 +1,37 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+ name: freenas-provisioner
+
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+
+  template:
+    metadata:
+      labels:
+        app: freenas-provisioner
+    spec:
+      serviceAccountName: freenas-provisioner
+      containers:
+        - name: freenas-provisioner
+          image: registry.wheat-dn42.net/freenas-provisioner:latest
+          imagePullPolicy: "Always"
+          env:
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: freenas-provisioner-api-credentials
+                  key: username
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: freenas-provisioner-api-credentials
+                  key: password
+            - name: ADDRESS
+              value: 192.168.1.10
+            - name: POOL
+              value: wheatpool
+            - name: SCHEME
+              value: https
