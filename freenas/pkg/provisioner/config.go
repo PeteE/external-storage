@@ -12,8 +12,6 @@ type FreeNasConfig struct {
     Pool string
     Username string
     Password string
-    Portal string
-    IQN string
 }
 
 var log = logrus.New()

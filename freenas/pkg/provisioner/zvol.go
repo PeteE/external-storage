@@ -1,49 +1,49 @@
 package provisioner
 import (
     "fmt"
-	"net/http"
+    "net/http"
     "encoding/json"
     "bytes"
 )
 
 // http://api.freenas.org/resources/storage.html#volume
 type ZPool struct {
-	ID       int64 `json:"id"`
-	Avail    int64 `json:"avail"`
-	Children []struct {
-		ID       int64 `json:"id"`
-		Avail    int64 `json:"avail"`
-		Children []struct {
-			ID         int64  `json:"id"`
-			Avail      int64  `json:"avail"`
-			Mountpoint string `json:"mountpoint"`
-			Name       string `json:"name"`
-			Path       string `json:"path"`
-			Status     string `json:"status"`
-			Type       string `json:"type"`
-			Used       int64  `json:"used"`
-			UsedPct    int64  `json:"used_pct"`
-		} `json:"children"`
-		Mountpoint string `json:"mountpoint"`
-		Name       string `json:"name"`
-		Path       string `json:"path"`
-		Status     string `json:"status"`
-		Type       string `json:"type"`
-		Used       int64  `json:"used"`
-		UsedPct    int64  `json:"used_pct"`
-	} `json:"children"`
-	IsDecrypted   bool    `json:"is_decrypted"`
-	IsUpgraded    bool    `json:"is_upgraded"`
-	Mountpoint    string  `json:"mountpoint"`
-	Name          string  `json:"name"`
-	Status        string  `json:"status"`
-	Used          int64   `json:"used"`
-	UsedPct       string  `json:"used_pct"`
-	VolEncrypt    int64   `json:"vol_encrypt"`
-	VolEncryptkey string  `json:"vol_encryptkey"`
-	VolFstype     string  `json:"vol_fstype"`
-	VolGuid       float64 `json:"vol_guid,string"`
-	VolName       string  `json:"vol_name"`
+    ID       int64 `json:"id"`
+    Avail    int64 `json:"avail"`
+    Children []struct {
+        ID       int64 `json:"id"`
+        Avail    int64 `json:"avail"`
+        Children []struct {
+            ID         int64  `json:"id"`
+            Avail      int64  `json:"avail"`
+            Mountpoint string `json:"mountpoint"`
+            Name       string `json:"name"`
+            Path       string `json:"path"`
+            Status     string `json:"status"`
+            Type       string `json:"type"`
+            Used       int64  `json:"used"`
+            UsedPct    int64  `json:"used_pct"`
+        } `json:"children"`
+        Mountpoint string `json:"mountpoint"`
+        Name       string `json:"name"`
+        Path       string `json:"path"`
+        Status     string `json:"status"`
+        Type       string `json:"type"`
+        Used       int64  `json:"used"`
+        UsedPct    int64  `json:"used_pct"`
+    } `json:"children"`
+    IsDecrypted   bool    `json:"is_decrypted"`
+    IsUpgraded    bool    `json:"is_upgraded"`
+    Mountpoint    string  `json:"mountpoint"`
+    Name          string  `json:"name"`
+    Status        string  `json:"status"`
+    Used          int64   `json:"used"`
+    UsedPct       string  `json:"used_pct"`
+    VolEncrypt    int64   `json:"vol_encrypt"`
+    VolEncryptkey string  `json:"vol_encryptkey"`
+    VolFstype     string  `json:"vol_fstype"`
+    VolGuid       float64 `json:"vol_guid,string"`
+    VolName       string  `json:"vol_name"`
 }
 
 func CreateVolume(config *FreeNasConfig, vol string, size int64) (*ZVol, error){

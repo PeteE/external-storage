@@ -56,23 +56,26 @@ var startcontrollerCmd = &cobra.Command{
         if err != nil {
             log.Fatalf("Error getting server version: %v", err)
         }
-        url := fmt.Sprintf("%s://%s/", viper.GetString("scheme"), viper.GetString("address"))
-        iqn := viper.GetString("iqn")
-        log.Debugf("IQN: %s", iqn)
+        uri := fmt.Sprintf("%s://%s/", viper.GetString("scheme"), viper.GetString("address"))
         freeNasConfig := &provisioner.FreeNasConfig{
-            Uri: url,
+            Uri: uri,
             Pool: viper.GetString("pool"),
             Username: viper.GetString("username"),
             Password: viper.GetString("password"),
-            Portal: fmt.Sprintf("%s:%d", viper.GetString("address"), 3260),
-            IQN: iqn,
         }
         freenasProvisioner := provisioner.NewFreenasProvisioner(freeNasConfig)
 
         pc := controller.NewProvisionController(kubernetesClientSet, viper.GetString("provisioner-name"), freenasProvisioner, serverVersion.GitVersion)
+        controller.ResyncPeriod(viper.GetDuration("resync-period"))
+        controller.ExponentialBackOffOnError(viper.GetBool("exponential-backoff-on-error"))
+        controller.FailedProvisionThreshold(viper.GetInt("fail-retry-threshold"))
+        controller.FailedDeleteThreshold(viper.GetInt("fail-retry-threshold"))
+        controller.LeaseDuration(viper.GetDuration("lease-period"))
+        controller.RenewDeadline(viper.GetDuration("renew-deadline"))
+        controller.TermLimit(viper.GetDuration("term-limit"))
+        controller.RetryPeriod(viper.GetDuration("retry-period"))
         log.Debugln("freenas iscsi controller created, running forever...")
         pc.Run(wait.NeverStop)
-
     },
 }
 func init() {
@@ -86,8 +89,6 @@ func init() {
     viper.BindPFlag("password", startcontrollerCmd.Flags().Lookup("password"))
     startcontrollerCmd.Flags().String("address", "", "Freenas address")
     viper.BindPFlag("address", startcontrollerCmd.Flags().Lookup("address"))
-    startcontrollerCmd.Flags().String("iqn", "iqn.2005-10.org.freenas.ctl", "Freenas IQN")
-    viper.BindPFlag("iqn", startcontrollerCmd.Flags().Lookup("iqn"))
     startcontrollerCmd.Flags().String("pool", "tank", "name of the freenas zpool")
     viper.BindPFlag("pool", startcontrollerCmd.Flags().Lookup("pool"))
 

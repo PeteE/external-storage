@@ -1,13 +1,13 @@
 package provisioner
 
 import (
-	"fmt"
-	"strconv"
-	"github.com/kubernetes-incubator/external-storage/lib/controller"
-	"github.com/kubernetes-incubator/external-storage/lib/util"
-	"github.com/spf13/viper"
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    "fmt"
+    "strconv"
+    "github.com/kubernetes-incubator/external-storage/lib/controller"
+    "github.com/kubernetes-incubator/external-storage/lib/util"
+    "github.com/spf13/viper"
+    "k8s.io/api/core/v1"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type freenasProvisioner struct {
@@ -16,117 +16,107 @@ type freenasProvisioner struct {
 
 // NewFreenasProvisioner creates new iscsi provisioner
 func NewFreenasProvisioner(config *FreeNasConfig) controller.Provisioner {
-	initLog()
+    initLog()
 
-	return &freenasProvisioner{
-		Config : config,
-	}
+    return &freenasProvisioner{
+        Config : config,
+    }
 }
 
 // getAccessModes returns access modes iscsi volume supported.
 func (p *freenasProvisioner) getAccessModes() []v1.PersistentVolumeAccessMode {
-	return []v1.PersistentVolumeAccessMode{
-		v1.ReadWriteOnce,
-		v1.ReadOnlyMany,
-	}
+    return []v1.PersistentVolumeAccessMode{
+        v1.ReadWriteOnce,
+        v1.ReadOnlyMany,
+    }
 }
 
 // Provision creates a storage asset and returns a PV object representing it.
 func (p *freenasProvisioner) Provision(options controller.VolumeOptions) (*v1.PersistentVolume, error) {
-	if !util.AccessModesContainedInAll(p.getAccessModes(), options.PVC.Spec.AccessModes) {
-		return nil, fmt.Errorf("invalid AccessModes %v: only AccessModes %v are supported", options.PVC.Spec.AccessModes, p.getAccessModes())
-	}
+    if !util.AccessModesContainedInAll(p.getAccessModes(), options.PVC.Spec.AccessModes) {
+        return nil, fmt.Errorf("invalid AccessModes %v: only AccessModes %v are supported", options.PVC.Spec.AccessModes, p.getAccessModes())
+    }
     volName := p.getVolumeName(options)
-	log.Debugln("new provision request received for pvc: ", volName)
+    log.Debugln("new provision request received for pvc: ", volName)
 
     size := getSize(options)
     log.Debugf("got size: %d\n", size)
-	vol, err := CreateVolume(p.Config, volName, size)
-	if err != nil {
-		log.Warnln(err)
-		return nil, err
-	}
-	log.Debugln("volume created with vol: ", vol )
 
-	annotations := make(map[string]string)
-	annotations["volume_name"] = vol.Name
-	annotations["pool"] = getPool(options.Parameters["pool"])
+    vol, err := CreateVolume(p.Config, volName, size)
+    if err != nil {
+        log.Warnln(err)
+        return nil, err
+    }
+    log.Debugln("volume created with vol: ", vol )
 
-	pv := &v1.PersistentVolume{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        options.PVName,
-			Labels:      map[string]string{},
-			Annotations: annotations,
-		},
-		Spec: v1.PersistentVolumeSpec{
-			PersistentVolumeReclaimPolicy: options.PersistentVolumeReclaimPolicy,
-			AccessModes:                   options.PVC.Spec.AccessModes,
-			Capacity: v1.ResourceList{
-				v1.ResourceName(v1.ResourceStorage): options.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)],
-			},
-			// set volumeMode from PVC Spec
-			VolumeMode: options.PVC.Spec.VolumeMode,
-			PersistentVolumeSource: v1.PersistentVolumeSource{
-				ISCSI: &v1.ISCSIPersistentVolumeSource{
-					TargetPortal:      p.Config.Portal,
-                    IQN:               getIQN(options.Parameters["iqn"], vol.Name),
-					ISCSIInterface:    "default",
-					Lun:               0,
-					ReadOnly:          getReadOnly(options.Parameters["readonly"]),
-					FSType:            getFsType(options.Parameters["fsType"]),
-				},
-			},
-		},
-	}
-	return pv, nil
+    iqn := fmt.Sprintf("%s:%s", options.Parameters["iqn"], vol.Name)
+
+    annotations := make(map[string]string)
+    annotations["volume_name"] = vol.Name
+    annotations["pool"] = p.Config.Pool
+    annotations["iqn"] = iqn
+
+    pv := &v1.PersistentVolume{
+        ObjectMeta: metav1.ObjectMeta{
+            Name:        options.PVName,
+            Labels:      map[string]string{},
+            Annotations: annotations,
+        },
+        Spec: v1.PersistentVolumeSpec{
+            PersistentVolumeReclaimPolicy: options.PersistentVolumeReclaimPolicy,
+            AccessModes:                   options.PVC.Spec.AccessModes,
+            Capacity: v1.ResourceList{
+                v1.ResourceName(v1.ResourceStorage): options.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)],
+            },
+            // set volumeMode from PVC Spec
+            VolumeMode: options.PVC.Spec.VolumeMode,
+            PersistentVolumeSource: v1.PersistentVolumeSource{
+                ISCSI: &v1.ISCSIPersistentVolumeSource{
+                    TargetPortal:      options.Parameters["targetPortal"],
+                    IQN:               iqn,
+                    ISCSIInterface:    "default",
+                    Lun:               0,
+                    ReadOnly:          getReadOnly(options.Parameters["readonly"]),
+                    FSType:            getFsType(options.Parameters["fsType"]),
+                },
+            },
+        },
+    }
+    return pv, nil
 }
 
 // Delete removes the storage asset that was created by Provision represented
 // by the given PV.
 func (p *freenasProvisioner) Delete(volume *v1.PersistentVolume) error {
-	//vol from the annotation
+    //vol from the annotation
     name := volume.GetName()
-	log.Debugln("volume deletion request received: ", volume.GetName())
+    log.Debugln("volume deletion request received: ", volume.GetName())
     err := DeleteVolume(p.Config, name)
     if err != nil {
         log.Fatal(err)
         return err
     }
-	return nil
+    return nil
 }
-
 func getReadOnly(readonly string) bool {
-	isReadOnly, err := strconv.ParseBool(readonly)
-	if err != nil {
-		return false
-	}
-	return isReadOnly
-}
-
-func getPool(pool string) string {
-    if pool == "" {
-        return viper.GetString("pool")
+    isReadOnly, err := strconv.ParseBool(readonly)
+    if err != nil {
+        return false
     }
-	return pool
-}
-func getIQN(iqn string, vol string) string {
-    if iqn == "" {
-        iqn = viper.GetString("iqn")
-    }
-    return fmt.Sprintf("%s:%s", iqn, vol)
+    return isReadOnly
 }
 
 func getFsType(fsType string) string {
-	if fsType == "" {
-		return viper.GetString("default-fs")
-	}
-	return fsType
+    if fsType == "" {
+        return viper.GetString("default-fs")
+    }
+    return fsType
 }
 func getSize(options controller.VolumeOptions) int64 {
-	q := options.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)]
-	return q.Value()
+    q := options.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)]
+    return q.Value()
 }
 
 func (p *freenasProvisioner) getVolumeName(options controller.VolumeOptions) string {
-	return options.PVName
+    return options.PVName
 }
